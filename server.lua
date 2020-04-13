@@ -145,10 +145,13 @@ AddEventHandler('fd_turfs:memberInTurf',function(zone,gang)
 end)
 
 ESX.RegisterServerCallback('fd_turfs:isInGang', function(source,cb,type)
-    local xPlayer = ESX.GetPlayerFromId(source)
-    MySQL.Async.fetchAll("SELECT * FROM users WHERE gang IS NOT NULL AND identifier = @identifier",{['@identifier']=xPlayer.identifier},function(result)
-        cb(result)
-    end)
+    local xPlayer
+    if(ESX.IsPlayerLoaded(source)) then
+        xPlayer = ESX.GetPlayerFromId(source)
+        MySQL.Async.fetchAll("SELECT * FROM users WHERE gang IS NOT NULL AND identifier = @identifier",{['@identifier']=xPlayer.identifier},function(result)
+            cb(result)
+        end)
+    end
 end)
 
 Citizen.CreateThread(function()
