@@ -157,10 +157,6 @@ Citizen.CreateThread(function()
         get_open_turfs()
         get_gangs()
         close_turfs()
-        -- print(dump(gangs))
-        -- Citizen.Wait(3000)
-        print("strawberry: "..dump(points.strawberry))
-        print("forum: "..dump(points.forum))
     end
 end)
 
