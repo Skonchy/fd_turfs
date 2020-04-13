@@ -5,15 +5,15 @@ Citizen.CreateThread(function()
         Citizen.Wait(3000)
         local pedPosition = GetEntityCoords(PlayerPedId())
         local zoneName = GetNameOfZone(pedPosition.x, pedPosition.y, pedPosition.z)
-        if player ~= nil then
-            TriggerServerEvent('fd_turfs:memberInTurf',source,zoneName,player.gang)
+        if player ~= nil and IsPedDeadOrDying(GetPlayerPed(-1),1) ~= 1 then
+            TriggerServerEvent('fd_turfs:memberInTurf',zoneName,player.gang)
         end
     end
 end)
 
 Citizen.CreateThread(function()
     while true do
-        Citizen.Wait(600)
+        Citizen.Wait(1000)
         local id = PlayerId()
         ESX.TriggerServerCallback('fd_turfs:isInGang',function(xPlayer)
             player=xPlayer[1]

@@ -2,7 +2,7 @@ ESX=nil
 TriggerEvent('esx:getSharedObject', function(obj) ESX = obj end)
 
 local zones={
-    forum = {'STRAW','CHAMH'},
+    forum = 'CHAMH',
     grove = 'DAVIS',
     jamestown = 'RANCHO',
     seoul = 'KOREAT',
@@ -18,6 +18,7 @@ local zones={
     bluffs = 'PBLUFF',
     vineyard = 'TONGVAH',
     weed = 'MTCHIL',
+    strawberry = 'STRAW'
 }
 
 local points={
@@ -37,6 +38,7 @@ local points={
     bluffs = {},
     vineyard = {},
     weed = {},
+    strawberry= {}
 }
 
 local open_turfs={}
@@ -55,10 +57,8 @@ end
 Citizen.CreateThread(function()
 get_gangs()
 Citizen.Wait(3000)
-print(dump(gangs))
 for k,v in pairs(points) do
     for k1, v1 in pairs(gangs) do
-        print(k1)
         table.insert(points[k],{k1,0})
     end
 end
@@ -67,21 +67,18 @@ end)
 function refresh_points(turf)
     points[turf]={}
     for k,v in pairs(gangs) do
-        print()
         table.insert(points[turf],{k,0})
     end
 end
 
 function turf_taken(turf,gang)
     refresh_points(turf)
-    print(turf.." "..gang)
-    local open = os.time(os.date('*t'))+172800
+    local open = os.time(os.date('*t'))+21600 --172800
     local gang_id=gang
     local gang_name
     MySQL.Async.fetchAll("SELECT name FROM ganglist WHERE id = @id",{['@id']=gang_id},function(result)
         gang_name=result[1]
     end)
-    print(gang_name)
     MySQL.Async.execute("UPDATE turfs SET time_open = @time, gang = @gang WHERE id = @turf",{
         ['@time']=open,
         ['@gang']=gang,
@@ -102,48 +99,45 @@ function close_turfs()
     
     local vprev=0
     local kprev=1
+    local curTurf
     for k,v in pairs(open_turfs) do
         curTurf=open_turfs[k].description
         for k1,v1 in pairs(points) do
             if k1==curTurf then
-                for k2,v2 in pairs(points[curTurf]) do
-                    if v2[2] > vprev then
-                        vprev=v2
+                for k2,v2 in pairs(points[k1]) do
+                    if points[k1][k2][2] > vprev then
+                        vprev=points[k1][k2][2]
                         kprev=k2
                     end
                 end
             end
         end
     end
-    if v==0 or v==nil then
+    if vprev==0 then
         if(open_turfs[kprev]~=nil) then
-            MySQL.Async.execute("UPDATE turfs SET gang = @test WHERE id = @id",{
-                ['@test']="test",
+            MySQL.Async.execute("UPDATE turfs SET gang = @gang WHERE id = @id",{
+                ['@gang']="test",
                 ['@id']=open_turfs[kprev].id
             },function(rowsChanged) 
             end)
         end
     else
-        turf_taken(open_turfs[kprev].id,kprev)
+        if tonumber(open_turfs[kprev].time_open) <= current_time then
+            turf_taken(open_turfs[kprev].id,kprev)
+            print("Turf Taken: "..open_turfs[kprev].description.." by gang: "..kprev)
+        end
     end
 end
 
 RegisterServerEvent('fd_turfs:memberInTurf')
-AddEventHandler(function(source,zone,gang)
-    for k4,v4 in pairs(open_turfs) do
-        if v4==zone then
-            for k,v in pairs(zones) do
-                if v==zone then
-                    for k2,v2 in pairs(points) do
-                        if k2==k then
-                            for k3,v3 in pairs(k2) do
-                                if k3==gang and total<7200 then
-                                    local total=points.k2.k3[2]+1
-                                    points.k2.k3[2]=total
-                                end
-                            end
-                        end
-                    end
+AddEventHandler('fd_turfs:memberInTurf',function(zone,gang)
+    for k2,v2 in pairs(open_turfs) do
+        if v2.id==zone then
+            for k,v in pairs(points[v2.description]) do
+                if(k==gang) then
+                    local temp = points[v2.description][k][2]
+                    temp = temp+1
+                    points[v2.description][k][2]=temp
                 end
             end
         end
@@ -159,13 +153,14 @@ end)
 
 Citizen.CreateThread(function()
     while true do
-        Citizen.Wait(3600) -- eventually every 60 minutes or 360000 ms
+        Citizen.Wait(2000) -- eventually every 60 minutes or 360000 ms
         get_open_turfs()
         get_gangs()
         close_turfs()
         -- print(dump(gangs))
         -- Citizen.Wait(3000)
-        -- print(dump(points))
+        print("strawberry: "..dump(points.strawberry))
+        print("forum: "..dump(points.forum))
     end
 end)
 
