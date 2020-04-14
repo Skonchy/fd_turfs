@@ -146,7 +146,7 @@ end)
 
 ESX.RegisterServerCallback('fd_turfs:isInGang', function(source,cb,type)
     local xPlayer
-    if(ESX.IsPlayerLoaded(source)) then
+    if(true) then
         xPlayer = ESX.GetPlayerFromId(source)
         MySQL.Async.fetchAll("SELECT * FROM users WHERE gang IS NOT NULL AND identifier = @identifier",{['@identifier']=xPlayer.identifier},function(result)
             cb(result)
